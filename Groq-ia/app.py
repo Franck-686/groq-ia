@@ -9,7 +9,7 @@ load_dotenv()
 
 supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_KEY")
-groq_api_key = os.getenv("ENG_AGENTE")
+groq_api_key = os.getenv("GROQ_API_KEY","ENG_AGENTE")
 
 supabase = create_client(supabase_url, supabase_key)
 
