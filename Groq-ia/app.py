@@ -7,7 +7,7 @@ import os
 
 load_dotenv()
 
-def get_secret(name, fallback=none):
+def get_secret(name, fallback=None):
     try:
         return st.secrets[name]
     except Exception:
