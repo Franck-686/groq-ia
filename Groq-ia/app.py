@@ -31,6 +31,9 @@ st.set_page_config(
     page_icon="🤖",
     layout="centered"
 )
+import streamlit as st
+
+st.write("Versão Streamlit:", st.__version__)
 
 # Login Google via Streamlit
 if not st.user.is_logged_in:
