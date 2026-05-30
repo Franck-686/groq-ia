@@ -7,9 +7,15 @@ import os
 
 load_dotenv()
 
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
-groq_api_key = os.getenv("GROQ_API_KEY","ENG_AGENTE")
+def get_secret(name, fallback=none):
+    try:
+        return st.secrets[name]
+    except Exception:
+        return os.getenv(fallback or name)
+    
+supabase_url = get_secret("SUPABASE_URL")
+supabase_key = get_secret("SUPABASE_KEY")
+groq_api_key = get_secret("GROQ_API_KEY", "ENG_AGENTE")
 
 supabase = create_client(supabase_url, supabase_key)
 
