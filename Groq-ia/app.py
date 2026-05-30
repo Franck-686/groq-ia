@@ -35,7 +35,7 @@ st.set_page_config(
 #login Google para usar IA
 if not st.user.is_logged_in:
     if st.button("Entrar com Google"):
-        st.login("google")
+        st.login()
     st.stop()
 
 st.sidebar.success(f"Logado como {st.user.email}")
