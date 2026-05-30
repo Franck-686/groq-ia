@@ -1,24 +1,125 @@
 import streamlit as st
 from groq import Groq
 from dotenv import load_dotenv
+from supabase import create_client
 import os
 
-# Carrega .env
+
 load_dotenv()
 
-# Cliente IA
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_KEY")
+groq_api_key = os.getenv("ENG_AGENTE")
+
+supabase = create_client(supabase_url, supabase_key)
+
+
 client = Groq(
-    api_key=os.getenv("ENG_AGENTE")
+    api_key=groq_api_key
 )
 
-# Config página
+
+
 st.set_page_config(
     page_title="Minha IA",
     page_icon="🤖",
     layout="centered"
 )
 
-# Histórico
+#login Google para usar IA
+if not st.user.is_logged_in:
+    st.button("Entrar com Google", on_click=st.login)
+    st.stop()
+
+st.sidebar.success(f"Logado como {st.user.email}")
+
+if st.sidebar.button("Sair"):
+    st.logout()
+
+try:
+    profile = supabase.table("profiles") \
+        .select("*") \
+        .eq("email", st.user.email) \
+        .execute()
+
+    if len(profile.data) == 0:
+        supabase.table("profiles").insert({
+            "email": st.user.email,
+            "name": st.user.name
+        }).execute()
+
+        profile = supabase.table("profiles") \
+            .select("*") \
+            .eq("email", st.user.email) \
+            .execute()
+
+    user_id = profile.data[0]["id"]
+
+    if "conversation_id" not in st.session_state:
+        conversation = supabase.table("conversations").insert({
+            "user_id": user_id,
+            "title": "Novo Chat"
+        }).execute()
+
+        st.session_state["conversation_id"] = conversation.data[0]["id"]
+
+    if st.sidebar.button("Novo Chat"):
+        conversation = supabase.table("conversations").insert({
+            "user_id": user_id,
+            "title": "Novo Chat"
+        }).execute()
+
+        st.session_state["conversation_id"] = conversation.data[0]["id"]
+
+        st.session_state["messages"] = [
+            {
+                "role": "system",
+                "content": "Você é uma IA super inteligente, que responde de forma precisa e também mais humanizada,"
+             " nunca diga que você é uma IA da OpenAI ou algo do genero, se lhe perguntarem, você foi criada por Vinicius Franck Lourenço."
+            }
+        ]
+        st.rerun()
+
+    conversas = supabase.table("conversations") \
+        .select("*") \
+        .eq("user_id", user_id) \
+        .order("created_at", desc=True) \
+        .execute()
+
+    st.sidebar.divider()
+
+    for conversa in conversas.data:
+        if st.sidebar.button(
+            conversa["title"],
+            key=f"chat_{conversa['id']}"
+        ):
+            st.session_state["conversation_id"] = conversa["id"]
+
+            mensagens_db = supabase.table("messages") \
+                .select("role, content") \
+                .eq("conversation_id", conversa["id"]) \
+                .order("created_at", desc=False) \
+                .execute()
+            
+            st.session_state["messages"] = [
+            {
+                "role": "system",
+                "content": "Você é uma IA super inteligente, que responde de forma precisa e também mais humanizada,"
+             " nunca diga que você é uma IA da OpenAI ou algo do genero, se lhe perguntarem, você foi criada por Vinicius Franck Lourenço."
+            }
+            ]
+            for msg in mensagens_db.data:
+                st.session_state["messages"].append({
+                    "role": msg["role"],
+                    "content": msg["content"]
+                })
+            st.rerun()
+
+except Exception as e:
+    st.error(f"Erro ao preparar usuário/conversa: {e}")
+    st.stop()
+
+#Historico
 if "messages" not in st.session_state:
 
     st.session_state.messages = [
@@ -57,6 +158,28 @@ if prompt:
         "content": prompt
     })
 
+    supabase.table("messages").insert({
+        "conversation_id": st.session_state["conversation_id"],
+        "role": "user",
+        "content": prompt
+    }).execute()
+
+    conversa_atual = supabase.table("conversations") \
+        .select("title") \
+        .eq("id", st.session_state["conversation_id"]) \
+        .execute()
+    
+    if conversa_atual.data[0]["title"] == "Novo Chat":
+        
+        novo_titulo = prompt[:50] + "..." if len(prompt) > 50 else prompt
+
+        supabase.table("conversations") \
+            .update({
+                "title": novo_titulo
+                }) \
+                .eq("id", st.session_state["conversation_id"]) \
+                .execute()
+
     # Resposta IA
     with st.chat_message("assistant"):
 
@@ -86,3 +209,8 @@ if prompt:
         "role": "assistant",
         "content": resposta_completa
     })
+    supabase.table("messages").insert({
+        "conversation_id": st.session_state["conversation_id"],
+        "role": "assistant",
+        "content": resposta_completa
+    }).execute()
