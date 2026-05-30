@@ -33,10 +33,16 @@ st.set_page_config(
 )
 
 #login Google para usar IA
-if not st.user.is_logged_in:
-    if st.button("Entrar com Google"):
-        st.login()
-    st.stop()
+redirect_url = "https://groq-ia-3padmgebbyg3auuvnkohqr.streamlit.app"
+
+login_response = supabase.auth.sign_in_with_oauth({
+    "provider": "google",
+    "options": {
+        "redirect_to": redirect_url
+    }
+})
+
+st.sidebar.link_button("Entrar com Google", login_response.url)
 
 st.sidebar.success(f"Logado como {st.user.email}")
 
