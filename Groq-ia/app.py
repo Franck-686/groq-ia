@@ -32,17 +32,10 @@ st.set_page_config(
     layout="centered"
 )
 
-#login Google para usar IA
-redirect_url = "https://groq-ia-3padmgebbyg3auuvnkohqr.streamlit.app"
-
-login_response = supabase.auth.sign_in_with_oauth({
-    "provider": "google",
-    "options": {
-        "redirect_to": redirect_url
-    }
-})
-
-st.sidebar.link_button("Entrar com Google", login_response.url)
+# Login Google via Streamlit
+if not st.user.is_logged_in:
+    st.button("Entrar com Google", on_click=st.login)
+    st.stop()
 
 st.sidebar.success(f"Logado como {st.user.email}")
 
@@ -83,12 +76,10 @@ try:
         }).execute()
 
         st.session_state["conversation_id"] = conversation.data[0]["id"]
-
         st.session_state["messages"] = [
             {
                 "role": "system",
-                "content": "Você é uma IA super inteligente, que responde de forma precisa e também mais humanizada,"
-             " nunca diga que você é uma IA da OpenAI ou algo do genero, se lhe perguntarem, você foi criada por Vinicius Franck Lourenço."
+                "content": "Você é uma IA super inteligente, que responde de forma precisa e também mais humanizada, nunca diga que você é uma IA da OpenAI ou algo do genero, se lhe perguntarem, você foi criada por Vinicius Franck Lourenço."
             }
         ]
         st.rerun()
@@ -113,19 +104,20 @@ try:
                 .eq("conversation_id", conversa["id"]) \
                 .order("created_at", desc=False) \
                 .execute()
-            
+
             st.session_state["messages"] = [
-            {
-                "role": "system",
-                "content": "Você é uma IA super inteligente, que responde de forma precisa e também mais humanizada,"
-             " nunca diga que você é uma IA da OpenAI ou algo do genero, se lhe perguntarem, você foi criada por Vinicius Franck Lourenço."
-            }
+                {
+                    "role": "system",
+                    "content": "Você é uma IA super inteligente, que responde de forma precisa e também mais humanizada, nunca diga que você é uma IA da OpenAI ou algo do genero, se lhe perguntarem, você foi criada por Vinicius Franck Lourenço."
+                }
             ]
+
             for msg in mensagens_db.data:
                 st.session_state["messages"].append({
                     "role": msg["role"],
                     "content": msg["content"]
                 })
+
             st.rerun()
 
 except Exception as e:
