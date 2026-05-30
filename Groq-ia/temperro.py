@@ -5,7 +5,7 @@ import os
 load_dotenv()
 
 client = Groq(
-    api_key=os.getenv("ENG_PROJETO")
+    api_key=os.getenv("ENG_AGENTE")
 )
 
 messages = [

@@ -8,7 +8,7 @@ load_dotenv()
 
 # Cliente IA
 client = Groq(
-    api_key=os.getenv("ENG_PROJETO")
+    api_key=os.getenv("ENG_AGENTE")
 )
 
 # Config página
