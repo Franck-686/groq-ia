@@ -31,32 +31,68 @@ st.set_page_config(
     page_icon="🤖",
     layout="centered"
 )
-# Login Google via Streamlit
-if not st.user.is_logged_in:
-    if st.button("Entrar com Google"):
-        st.login()
+# Login via Supabase Auth
+if "user_email" not in st.session_state:
+    st.session_state["user_email"] = None
+
+st.sidebar.title("Login")
+
+if st.session_state["user_email"] is None:
+    email = st.sidebar.text_input("Email")
+    password = st.sidebar.text_input("Senha", type="password")
+
+    if st.sidebar.button("Entrar"):
+        try:
+            res = supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": password
+            })
+
+            st.session_state["user_email"] = res.user.email
+            st.rerun()
+
+        except Exception as e:
+            st.sidebar.error(f"Erro ao entrar: {e}")
+
+    if st.sidebar.button("Criar conta"):
+        try:
+            supabase.auth.sign_up({
+                "email": email,
+                "password": password
+            })
+
+            st.sidebar.success("Conta criada! Agora clique em Entrar.")
+
+        except Exception as e:
+            st.sidebar.error(f"Erro ao criar conta: {e}")
+
+    st.warning("Faça login para usar a IA.")
     st.stop()
 
-st.sidebar.success(f"Logado como {st.user.email}")
+else:
+    st.sidebar.success(f"Logado como {st.session_state['user_email']}")
 
-if st.sidebar.button("Sair"):
-    st.logout()
+    if st.sidebar.button("Sair"):
+        supabase.auth.sign_out()
+        st.session_state.clear()
+        st.rerun()
+
 
 try:
     profile = supabase.table("profiles") \
         .select("*") \
-        .eq("email", st.user.email) \
+        .eq("email", st.session_state["user_email"]) \
         .execute()
 
     if len(profile.data) == 0:
         supabase.table("profiles").insert({
-            "email": st.user.email,
-            "name": st.user.name
+            "email": st.session_state["user_email"],
+            "name": st.session_state["user_email"].split("@")[0]
         }).execute()
 
         profile = supabase.table("profiles") \
             .select("*") \
-            .eq("email", st.user.email) \
+            .eq("email", st.session_state["user_email"]) \
             .execute()
 
     user_id = profile.data[0]["id"]
