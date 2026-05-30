@@ -34,7 +34,8 @@ st.set_page_config(
 
 # Login Google via Streamlit
 if not st.user.is_logged_in:
-    st.button("Entrar com Google", on_click=st.login)
+    if st.button("Entrar com Google"):
+        st.login("google")
     st.stop()
 
 st.sidebar.success(f"Logado como {st.user.email}")
