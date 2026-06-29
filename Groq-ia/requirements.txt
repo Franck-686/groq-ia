@@ -1,5 +1,5 @@
 streamlit
-python-dotenv
 groq
+python-dotenv
 supabase
-streamlit[auth]
+tavily-python

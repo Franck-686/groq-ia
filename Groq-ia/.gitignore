@@ -1,8 +1,28 @@
+# Variáveis de ambiente
 .env
 **/.env
-.venv/
-__pycache__/
-*.pyc
-.vscode/
+
+# Secrets do Streamlit
 .streamlit/secrets.toml
 **/.streamlit/secrets.toml
+
+# Ambientes virtuais
+.venv/
+**/.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# VS Code
+.vscode/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
